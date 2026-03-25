@@ -1,3 +1,4 @@
+process.env.NODE_EXTRA_CA_CERTS = process.env.NODE_EXTRA_CA_CERTS;
 // WooCommerce REST API Functions
 // Uses WooCommerce REST API v3 with consumer key/secret authentication
 
@@ -17,6 +18,7 @@ import type {
 } from "./woocommerce.d";
 
 // Configuration
+
 const baseUrl = process.env.WORDPRESS_URL;
 const consumerKey = process.env.WC_CONSUMER_KEY;
 const consumerSecret = process.env.WC_CONSUMER_SECRET;
@@ -25,7 +27,7 @@ const isConfigured = Boolean(baseUrl && consumerKey && consumerSecret);
 
 if (!isConfigured) {
   console.warn(
-    "WooCommerce environment variables are not fully configured - WooCommerce features will be unavailable"
+    "WooCommerce environment variables are not fully configured - WooCommerce features will be unavailable",
   );
 }
 
@@ -35,7 +37,7 @@ export class WooCommerceAPIError extends Error {
     message: string,
     public status: number,
     public endpoint: string,
-    public code?: string
+    public code?: string,
   ) {
     super(message);
     this.name = "WooCommerceAPIError";
@@ -59,7 +61,7 @@ const CACHE_TTL = 3600; // 1 hour
 // Build authenticated URL for WooCommerce REST API
 function buildWooCommerceUrl(
   endpoint: string,
-  query?: Record<string, any>
+  query?: Record<string, any>,
 ): string {
   if (!baseUrl || !consumerKey || !consumerSecret) {
     throw new Error("WooCommerce not configured");
@@ -85,7 +87,7 @@ async function woocommerceFetch<T>(
   endpoint: string,
   query?: Record<string, any>,
   tags: string[] = ["woocommerce"],
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<T> {
   if (!isConfigured) {
     throw new Error("WooCommerce not configured");
@@ -105,10 +107,11 @@ async function woocommerceFetch<T>(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new WooCommerceAPIError(
-      errorData.message || `WooCommerce API request failed: ${response.statusText}`,
+      errorData.message ||
+        `WooCommerce API request failed: ${response.statusText}`,
       response.status,
       endpoint,
-      errorData.code
+      errorData.code,
     );
   }
 
@@ -120,14 +123,14 @@ async function woocommerceFetchGraceful<T>(
   endpoint: string,
   fallback: T,
   query?: Record<string, any>,
-  tags: string[] = ["woocommerce"]
+  tags: string[] = ["woocommerce"],
 ): Promise<T> {
   if (!isConfigured) return fallback;
 
   try {
     return await woocommerceFetch<T>(endpoint, query, tags);
-  } catch {
-    console.warn(`WooCommerce fetch failed for ${endpoint}`);
+  } catch (err) {
+    console.warn(`WooCommerce fetch failed for ${endpoint}`, err);
     return fallback;
   }
 }
@@ -136,7 +139,7 @@ async function woocommerceFetchGraceful<T>(
 async function woocommerceFetchPaginated<T>(
   endpoint: string,
   query?: Record<string, any>,
-  tags: string[] = ["woocommerce"]
+  tags: string[] = ["woocommerce"],
 ): Promise<WooCommerceResponse<T>> {
   if (!isConfigured) {
     throw new Error("WooCommerce not configured");
@@ -155,10 +158,11 @@ async function woocommerceFetchPaginated<T>(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new WooCommerceAPIError(
-      errorData.message || `WooCommerce API request failed: ${response.statusText}`,
+      errorData.message ||
+        `WooCommerce API request failed: ${response.statusText}`,
       response.status,
       endpoint,
-      errorData.code
+      errorData.code,
     );
   }
 
@@ -175,7 +179,7 @@ async function woocommerceFetchPaginated<T>(
 async function woocommerceFetchPaginatedGraceful<T>(
   endpoint: string,
   query?: Record<string, any>,
-  tags: string[] = ["woocommerce"]
+  tags: string[] = ["woocommerce"],
 ): Promise<WooCommerceResponse<T[]>> {
   const emptyResponse: WooCommerceResponse<T[]> = {
     data: [],
@@ -196,7 +200,7 @@ async function woocommerceFetchPaginatedGraceful<T>(
 async function woocommerceMutate<T>(
   endpoint: string,
   method: "POST" | "PUT" | "DELETE",
-  body?: object
+  body?: object,
 ): Promise<T> {
   if (!isConfigured) {
     throw new Error("WooCommerce not configured");
@@ -217,10 +221,11 @@ async function woocommerceMutate<T>(
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new WooCommerceAPIError(
-      errorData.message || `WooCommerce API request failed: ${response.statusText}`,
+      errorData.message ||
+        `WooCommerce API request failed: ${response.statusText}`,
       response.status,
       endpoint,
-      errorData.code
+      errorData.code,
     );
   }
 
@@ -238,14 +243,21 @@ export async function getProducts(
     category?: number;
     tag?: number;
     search?: string;
-    orderby?: "date" | "id" | "title" | "slug" | "price" | "popularity" | "rating";
+    orderby?:
+      | "date"
+      | "id"
+      | "title"
+      | "slug"
+      | "price"
+      | "popularity"
+      | "rating";
     order?: "asc" | "desc";
     featured?: boolean;
     on_sale?: boolean;
     min_price?: number;
     max_price?: number;
     stock_status?: "instock" | "outofstock" | "onbackorder";
-  }
+  },
 ): Promise<WooCommerceResponse<Product[]>> {
   const query: Record<string, any> = {
     per_page: perPage,
@@ -260,7 +272,11 @@ export async function getProducts(
   if (params?.tag) cacheTags.push(`products-tag-${params.tag}`);
   if (params?.search) cacheTags.push("products-search");
 
-  return woocommerceFetchPaginatedGraceful<Product>("products", query, cacheTags);
+  return woocommerceFetchPaginatedGraceful<Product>(
+    "products",
+    query,
+    cacheTags,
+  );
 }
 
 export async function getAllProducts(params?: {
@@ -273,7 +289,7 @@ export async function getAllProducts(params?: {
     "products",
     [],
     { per_page: 100, status: "publish", ...params },
-    ["woocommerce", "products"]
+    ["woocommerce", "products"],
   );
 }
 
@@ -285,22 +301,26 @@ export async function getProductById(id: number): Promise<Product> {
   ]);
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+export async function getProductBySlug(
+  slug: string,
+): Promise<Product | undefined> {
   const products = await woocommerceFetchGraceful<Product[]>(
     "products",
     [],
     { slug, status: "publish" },
-    ["woocommerce", "products"]
+    ["woocommerce", "products"],
   );
   return products[0];
 }
 
-export async function getFeaturedProducts(limit: number = 4): Promise<Product[]> {
+export async function getFeaturedProducts(
+  limit: number = 4,
+): Promise<Product[]> {
   return woocommerceFetchGraceful<Product[]>(
     "products",
     [],
     { featured: true, per_page: limit, status: "publish" },
-    ["woocommerce", "products", "products-featured"]
+    ["woocommerce", "products", "products-featured"],
   );
 }
 
@@ -309,13 +329,13 @@ export async function getOnSaleProducts(limit: number = 8): Promise<Product[]> {
     "products",
     [],
     { on_sale: true, per_page: limit, status: "publish" },
-    ["woocommerce", "products", "products-sale"]
+    ["woocommerce", "products", "products-sale"],
   );
 }
 
 export async function getRelatedProducts(
   productId: number,
-  limit: number = 4
+  limit: number = 4,
 ): Promise<Product[]> {
   const product = await getProductById(productId);
   if (!product.related_ids || product.related_ids.length === 0) {
@@ -327,7 +347,7 @@ export async function getRelatedProducts(
     "products",
     [],
     { include: relatedIds.join(","), status: "publish" },
-    ["woocommerce", "products"]
+    ["woocommerce", "products"],
   );
 }
 
@@ -347,14 +367,18 @@ export async function getAllProductSlugs(): Promise<{ slug: string }[]> {
         status: "publish",
       });
 
-      allSlugs.push(...response.data.map((product) => ({ slug: product.slug })));
+      allSlugs.push(
+        ...response.data.map((product) => ({ slug: product.slug })),
+      );
       hasMore = page < response.headers.totalPages;
       page++;
     }
 
     return allSlugs;
   } catch {
-    console.warn("WooCommerce unavailable, skipping static generation for products");
+    console.warn(
+      "WooCommerce unavailable, skipping static generation for products",
+    );
     return [];
   }
 }
@@ -364,24 +388,29 @@ export async function getAllProductSlugs(): Promise<{ slug: string }[]> {
 // ============================================================================
 
 export async function getProductVariations(
-  productId: number
+  productId: number,
 ): Promise<ProductVariation[]> {
   return woocommerceFetchGraceful<ProductVariation[]>(
     `products/${productId}/variations`,
     [],
     { per_page: 100 },
-    ["woocommerce", "products", `product-${productId}`, "variations"]
+    ["woocommerce", "products", `product-${productId}`, "variations"],
   );
 }
 
 export async function getProductVariation(
   productId: number,
-  variationId: number
+  variationId: number,
 ): Promise<ProductVariation> {
   return woocommerceFetch<ProductVariation>(
     `products/${productId}/variations/${variationId}`,
     undefined,
-    ["woocommerce", "products", `product-${productId}`, `variation-${variationId}`]
+    [
+      "woocommerce",
+      "products",
+      `product-${productId}`,
+      `variation-${variationId}`,
+    ],
   );
 }
 
@@ -391,12 +420,12 @@ export async function getProductVariation(
 
 export async function getProductCategories(
   page: number = 1,
-  perPage: number = 100
+  perPage: number = 100,
 ): Promise<WooCommerceResponse<ProductCategory[]>> {
   return woocommerceFetchPaginatedGraceful<ProductCategory>(
     "products/categories",
     { per_page: perPage, page, hide_empty: true },
-    ["woocommerce", "categories"]
+    ["woocommerce", "categories"],
   );
 }
 
@@ -405,26 +434,28 @@ export async function getAllProductCategories(): Promise<ProductCategory[]> {
     "products/categories",
     [],
     { per_page: 100, hide_empty: true },
-    ["woocommerce", "categories"]
+    ["woocommerce", "categories"],
   );
 }
 
-export async function getProductCategoryById(id: number): Promise<ProductCategory> {
+export async function getProductCategoryById(
+  id: number,
+): Promise<ProductCategory> {
   return woocommerceFetch<ProductCategory>(
     `products/categories/${id}`,
     undefined,
-    ["woocommerce", "categories", `category-${id}`]
+    ["woocommerce", "categories", `category-${id}`],
   );
 }
 
 export async function getProductCategoryBySlug(
-  slug: string
+  slug: string,
 ): Promise<ProductCategory | undefined> {
   const categories = await woocommerceFetchGraceful<ProductCategory[]>(
     "products/categories",
     [],
     { slug },
-    ["woocommerce", "categories"]
+    ["woocommerce", "categories"],
   );
   return categories[0];
 }
@@ -436,7 +467,9 @@ export async function getAllCategorySlugs(): Promise<{ slug: string }[]> {
     const categories = await getAllProductCategories();
     return categories.map((cat) => ({ slug: cat.slug }));
   } catch {
-    console.warn("WooCommerce unavailable, skipping static generation for categories");
+    console.warn(
+      "WooCommerce unavailable, skipping static generation for categories",
+    );
     return [];
   }
 }
@@ -447,12 +480,12 @@ export async function getAllCategorySlugs(): Promise<{ slug: string }[]> {
 
 export async function getProductTags(
   page: number = 1,
-  perPage: number = 100
+  perPage: number = 100,
 ): Promise<WooCommerceResponse<ProductTag[]>> {
   return woocommerceFetchPaginatedGraceful<ProductTag>(
     "products/tags",
     { per_page: perPage, page, hide_empty: true },
-    ["woocommerce", "tags"]
+    ["woocommerce", "tags"],
   );
 }
 
@@ -461,18 +494,18 @@ export async function getAllProductTags(): Promise<ProductTag[]> {
     "products/tags",
     [],
     { per_page: 100, hide_empty: true },
-    ["woocommerce", "tags"]
+    ["woocommerce", "tags"],
   );
 }
 
 export async function getProductTagBySlug(
-  slug: string
+  slug: string,
 ): Promise<ProductTag | undefined> {
   const tags = await woocommerceFetchGraceful<ProductTag[]>(
     "products/tags",
     [],
     { slug },
-    ["woocommerce", "tags"]
+    ["woocommerce", "tags"],
   );
   return tags[0];
 }
@@ -482,13 +515,13 @@ export async function getProductTagBySlug(
 // ============================================================================
 
 export async function getProductReviews(
-  productId: number
+  productId: number,
 ): Promise<ProductReview[]> {
   return woocommerceFetchGraceful<ProductReview[]>(
     "products/reviews",
     [],
     { product: productId, status: "approved" },
-    ["woocommerce", "reviews", `product-${productId}`]
+    ["woocommerce", "reviews", `product-${productId}`],
   );
 }
 
@@ -499,7 +532,7 @@ export async function createProductReview(
     reviewer: string;
     reviewer_email: string;
     rating: number;
-  }
+  },
 ): Promise<ProductReview> {
   return woocommerceMutate<ProductReview>("products/reviews", "POST", {
     product_id: productId,
@@ -523,15 +556,19 @@ export async function getOrder(orderId: number): Promise<Order> {
   ]);
 }
 
-export async function getOrderByKey(orderKey: string): Promise<Order | undefined> {
+export async function getOrderByKey(
+  orderKey: string,
+): Promise<Order | undefined> {
   // WooCommerce doesn't support direct lookup by order_key
   // This would typically be handled through a custom endpoint or auth
-  throw new Error("Order lookup by key requires custom implementation or authentication");
+  throw new Error(
+    "Order lookup by key requires custom implementation or authentication",
+  );
 }
 
 export async function updateOrderStatus(
   orderId: number,
-  status: Order["status"]
+  status: Order["status"],
 ): Promise<Order> {
   return woocommerceMutate<Order>(`orders/${orderId}`, "PUT", { status });
 }
@@ -540,12 +577,12 @@ export async function updateOrderStatus(
 export async function getCustomerOrders(
   customerId: number,
   page: number = 1,
-  perPage: number = 10
+  perPage: number = 10,
 ): Promise<WooCommerceResponse<Order[]>> {
   return woocommerceFetchPaginated<Order[]>(
     "orders",
     { customer: customerId, per_page: perPage, page },
-    ["woocommerce", "orders", `customer-${customerId}`]
+    ["woocommerce", "orders", `customer-${customerId}`],
   );
 }
 
@@ -575,21 +612,27 @@ export async function createCustomer(customerData: {
 
 export async function updateCustomer(
   customerId: number,
-  customerData: Partial<Customer>
+  customerData: Partial<Customer>,
 ): Promise<Customer> {
-  return woocommerceMutate<Customer>(`customers/${customerId}`, "PUT", customerData);
+  return woocommerceMutate<Customer>(
+    `customers/${customerId}`,
+    "PUT",
+    customerData,
+  );
 }
 
 // ============================================================================
 // Coupons
 // ============================================================================
 
-export async function getCouponByCode(code: string): Promise<Coupon | undefined> {
+export async function getCouponByCode(
+  code: string,
+): Promise<Coupon | undefined> {
   const coupons = await woocommerceFetchGraceful<Coupon[]>(
     "coupons",
     [],
     { code },
-    ["woocommerce", "coupons"]
+    ["woocommerce", "coupons"],
   );
   return coupons[0];
 }
@@ -597,7 +640,7 @@ export async function getCouponByCode(code: string): Promise<Coupon | undefined>
 export async function validateCoupon(
   code: string,
   cartTotal: number,
-  productIds: number[]
+  productIds: number[],
 ): Promise<{ valid: boolean; discount: number; message?: string }> {
   const coupon = await getCouponByCode(code);
 
@@ -665,16 +708,18 @@ export async function getShippingZones(): Promise<ShippingZone[]> {
     "shipping/zones",
     [],
     undefined,
-    ["woocommerce", "shipping"]
+    ["woocommerce", "shipping"],
   );
 }
 
-export async function getShippingMethods(zoneId: number): Promise<ShippingMethod[]> {
+export async function getShippingMethods(
+  zoneId: number,
+): Promise<ShippingMethod[]> {
   return woocommerceFetchGraceful<ShippingMethod[]>(
     `shipping/zones/${zoneId}/methods`,
     [],
     undefined,
-    ["woocommerce", "shipping", `zone-${zoneId}`]
+    ["woocommerce", "shipping", `zone-${zoneId}`],
   );
 }
 
@@ -687,7 +732,7 @@ export async function getPaymentGateways(): Promise<PaymentGateway[]> {
     "payment_gateways",
     [],
     undefined,
-    ["woocommerce", "payment"]
+    ["woocommerce", "payment"],
   );
 }
 
@@ -702,19 +747,23 @@ export async function getEnabledPaymentGateways(): Promise<PaymentGateway[]> {
 
 export function formatPrice(
   price: string | number,
-  currency: string = "USD"
+  currency: string = "SEK",
 ): string {
   const numericPrice = typeof price === "string" ? parseFloat(price) : price;
 
-  return new Intl.NumberFormat("en-US", {
+  const prettyPrice: number = Number(numericPrice.toFixed(0));
+
+  return new Intl.NumberFormat("sv-SE", {
     style: "currency",
-    currency,
-  }).format(numericPrice);
+    currency: "SEK",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(prettyPrice);
 }
 
 export function calculateDiscountPercentage(
   regularPrice: string,
-  salePrice: string
+  salePrice: string,
 ): number {
   const regular = parseFloat(regularPrice);
   const sale = parseFloat(salePrice);
