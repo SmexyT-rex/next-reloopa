@@ -180,9 +180,13 @@ const styles = {
   layout: {
     spacing: "[&>*+*]:mt-6",
     article: "max-w-prose",
-    container: "max-w-5xl mx-auto p-6 sm:p-8",
+    container: "max-w-7xl mx-auto pb-6 sm:pb-8",
+    MaxContainer: "max-w-7xl mx-auto pb-6 sm:pb-8",
     section: "py-8 md:py-12",
+    MaxSection: "m-3 py-0 md:py-0",
   },
+
+  badges: {}
 };
 
 // Combine all typography styles
@@ -224,8 +228,20 @@ export const Section = ({ children, className, id }: BaseProps) => (
   </section>
 );
 
+export const MaxSection = ({ children, className, id }: BaseProps) => (
+  <section className={cn(styles.layout.MaxSection, className)} id={id}>
+    {children}
+  </section>
+);
+
 export const Container = ({ children, className, id }: BaseProps) => (
   <div className={cn(styles.layout.container, className)} id={id}>
+    {children}
+  </div>
+);
+
+export const MaxContainer = ({ children, className, id }: BaseProps) => (
+  <div className={cn(styles.layout.MaxContainer, className)} id={id}>
     {children}
   </div>
 );

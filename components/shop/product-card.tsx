@@ -3,7 +3,11 @@ import Link from "next/link";
 
 import type { Product } from "@/lib/woocommerce.d";
 import { cn } from "@/lib/utils";
-import { formatPrice, calculateDiscountPercentage, isProductInStock } from "@/lib/woocommerce";
+import {
+  formatPrice,
+  calculateDiscountPercentage,
+  isProductInStock,
+} from "@/lib/woocommerce";
 import { Badge } from "@/components/ui/badge";
 
 interface ProductCardProps {
@@ -24,7 +28,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
       href={`/shop/${product.slug}`}
       className={cn(
         "group flex flex-col border rounded-lg overflow-hidden bg-accent/30",
-        "hover:bg-accent/75 transition-all"
+        "hover:bg-accent/75 transition-all",
       )}
     >
       <div className="relative aspect-square overflow-hidden bg-muted">
@@ -62,7 +66,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         )}
 
         {/* Name */}
-        <h3 className="font-medium line-clamp-2 group-hover:underline decoration-muted-foreground underline-offset-4 decoration-dotted">
+        <h3 className="font-medium line-clamp-1 group-hover:underline decoration-muted-foreground underline-offset-4 decoration-dotted">
           {product.name}
         </h3>
 

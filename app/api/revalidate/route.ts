@@ -13,12 +13,14 @@ export async function POST(request: NextRequest) {
   try {
     const requestBody = await request.json();
     const secret = request.headers.get("x-webhook-secret");
+    console.log(secret);
+    console.log(process.env.WORDPRESS_WEBHOOK_SECRET);
 
     if (secret !== process.env.WORDPRESS_WEBHOOK_SECRET) {
       console.error("Invalid webhook secret");
       return NextResponse.json(
         { message: "Invalid webhook secret" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (!contentType) {
       return NextResponse.json(
         { message: "Missing content type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
       console.log(
         `Revalidating content: ${contentType}${
           contentId ? ` (ID: ${contentId})` : ""
-        }`
+        }`,
       );
 
       // Revalidate specific content type tags
@@ -124,7 +126,7 @@ export async function POST(request: NextRequest) {
           error: (error as Error).message,
           timestamp: new Date().toISOString(),
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
@@ -135,7 +137,7 @@ export async function POST(request: NextRequest) {
         error: (error as Error).message,
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

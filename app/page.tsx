@@ -1,3 +1,13 @@
+// Craft Imports
+import {
+  Section,
+  MaxSection,
+  Container,
+  Prose,
+  MaxContainer,
+} from "@/components/craft";
+
+// Next.js Imports
 import Link from "next/link";
 import { ArrowRight, Instagram } from "lucide-react";
 import { PageAnimator } from "@/components/page-animator";
@@ -63,21 +73,6 @@ export default async function Home() {
               <span className="italic font-light" style={{ color: "#316b1c" }}>
                 curated
               </span>{" "}
-              for you.
-            </h1>
-            <p
-              className="hero-text font-work text-base leading-relaxed mb-10 max-w-md"
-              style={{ color: "#41493c" }}
-            >
-              A gallery of rare finds and artisanal objects. Each piece is
-              hand-selected for its unique character, craftsmanship, and soul.
-              Once sold, they are gone forever.
-            </p>
-            <div className="hero-text flex items-center gap-4">
-              <Link
-                href="/shop"
-                id="hero-shop-cta"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded font-work text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.02]"
                 style={{
                   background: "linear-gradient(135deg, #316b1c, #66a34d)",
                   color: "#ffffff",
