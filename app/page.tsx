@@ -1,21 +1,11 @@
-// Craft Imports
-import {
-  Section,
-  MaxSection,
-  Container,
-  Prose,
-  MaxContainer,
-} from "@/components/craft";
-
-// Next.js Imports
 import Link from "next/link";
 import { ArrowRight, Instagram } from "lucide-react";
 import { PageAnimator } from "@/components/page-animator";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import {
   formatPrice,
-  getProducts,
   getFeaturedProducts,
+  getProducts,
 } from "@/lib/woocommerce";
 
 export const metadata = {
@@ -24,6 +14,60 @@ export const metadata = {
     "A curated digital gallery of rare finds and artisanal objects. Supporting creators worldwide through intentional commerce.",
 };
 
+const SOFT_COLORS = [
+  "bg-[#c9d8e8]",
+  "bg-[#e8dfc9]",
+  "bg-[#d4d0cc]",
+  "bg-[#d8e4d8]",
+  "bg-[#e8e0c8]",
+];
+
+const primaryGradient = "linear-gradient(135deg, #316b1c, #66a34d)";
+
+type PricedItem = {
+  sale_price?: string;
+  price?: string;
+  regular_price?: string;
+  on_sale?: boolean;
+};
+
+function getPriceInfo(item: PricedItem) {
+  const currentPriceValue =
+    item.sale_price || item.price || item.regular_price || "0";
+  const regularPriceValue = item.regular_price || "";
+  const hasDiscount = Boolean(
+    item.on_sale &&
+    regularPriceValue &&
+    item.sale_price &&
+    parseFloat(regularPriceValue) > parseFloat(item.sale_price),
+  );
+
+  return { currentPriceValue, regularPriceValue, hasDiscount };
+}
+
+function GradientButton({
+  href,
+  children,
+  className,
+}: {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-work text-sm font-semibold transition-all hover:opacity-90 ${className || ""}`}
+      style={{
+        background: primaryGradient,
+        color: "#ffffff",
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export default async function Home() {
   const [productsRes, featuredProducts] = await Promise.all([
     getProducts(1, 5),
@@ -31,25 +75,16 @@ export default async function Home() {
   ]);
   const products = productsRes.data;
 
-  // Hardcoded soft background colors for the placeholders
-  const softColors = [
-    "bg-[#c9d8e8]",
-    "bg-[#e8dfc9]",
-    "bg-[#d4d0cc]",
-    "bg-[#d8e4d8]",
-    "bg-[#e8e0c8]",
-  ];
-
   return (
     <div>
       <PageAnimator />
-      {/* ── Hero ── */}
+
+      {/* Hero */}
       <section
         className="relative overflow-hidden"
         style={{ background: "#f3f3f3", minHeight: "80vh" }}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-24 md:py-36 flex flex-col md:flex-row items-center gap-16">
-          {/* Left text */}
           <div className="flex-1 z-10">
             <p
               className="hero-text font-work text-xs font-medium uppercase tracking-widest mb-5"
@@ -57,6 +92,7 @@ export default async function Home() {
             >
               The Digital Curator
             </p>
+
             <h1
               className="hero-text font-manrope font-bold leading-none mb-6"
               style={{
@@ -72,15 +108,24 @@ export default async function Home() {
               <br />
               <span className="italic font-light" style={{ color: "#316b1c" }}>
                 curated
-              </span>{" "}
-                style={{
-                  background: "linear-gradient(135deg, #316b1c, #66a34d)",
-                  color: "#ffffff",
-                }}
-              >
+              </span>
+            </h1>
+
+            <p
+              className="font-work text-sm max-w-xl mb-8"
+              style={{ color: "#41493c" }}
+            >
+              Discover rare pieces chosen for character, craftsmanship, and
+              story. Every object is intentionally selected and available in
+              limited quantity.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-6">
+              <GradientButton href="/shop" className="px-6 py-3">
                 Shop Collection
                 <ArrowRight size={15} />
-              </Link>
+              </GradientButton>
+
               <Link
                 href="/posts"
                 className="font-work text-sm font-medium underline underline-offset-4 transition-opacity hover:opacity-60"
@@ -91,7 +136,6 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Right decorative panel */}
           <div className="hero-image flex-1 relative hidden md:flex justify-end">
             <div
               className="w-[420px] h-[520px] rounded-2xl overflow-hidden relative"
@@ -117,7 +161,7 @@ export default async function Home() {
                   </p>
                 </div>
               </div>
-              {/* Floating chip */}
+
               <div
                 className="absolute bottom-8 left-8 px-4 py-2 rounded-full backdrop-blur-sm"
                 style={{
@@ -137,7 +181,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── The Curator's Picks ── */}
+      {/* The Curator's Picks */}
       <section
         className="curator-section py-24"
         style={{ background: "#f9f9f9" }}
@@ -172,18 +216,10 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* Clean Editorial Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {featuredProducts.map((pick) => {
-              const currentPriceValue =
-                pick.sale_price || pick.price || pick.regular_price || "0";
-              const regularPriceValue = pick.regular_price || "";
-              const hasDiscount = Boolean(
-                pick.on_sale &&
-                regularPriceValue &&
-                pick.sale_price &&
-                parseFloat(regularPriceValue) > parseFloat(pick.sale_price),
-              );
+              const { currentPriceValue, regularPriceValue, hasDiscount } =
+                getPriceInfo(pick);
 
               return (
                 <Link
@@ -239,7 +275,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── Available Objects ── */}
+      {/* Available Objects */}
       <section
         className="available-section py-24"
         style={{ background: "#eeeeee" }}
@@ -273,35 +309,21 @@ export default async function Home() {
               </p>
             </div>
 
-            <Link
+            <GradientButton
               href="/shop"
-              className="hidden md:inline-flex items-center gap-2 px-6 py-3 rounded-full font-work text-sm font-semibold transition-all hover:opacity-90 hover:scale-[1.02] shrink-0"
-              style={{
-                background: "linear-gradient(135deg, #316b1c, #66a34d)",
-                color: "#ffffff",
-              }}
+              className="hidden md:inline-flex shrink-0 px-6 py-3"
             >
               Browse All
               <ArrowRight size={14} />
-            </Link>
+            </GradientButton>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {products.map((product, idx) => {
-              const currentPriceValue =
-                product.sale_price ||
-                product.price ||
-                product.regular_price ||
-                "0";
-              const regularPriceValue = product.regular_price || "";
-              const hasDiscount = Boolean(
-                product.on_sale &&
-                regularPriceValue &&
-                product.sale_price &&
-                parseFloat(regularPriceValue) > parseFloat(product.sale_price),
-              );
+              const { currentPriceValue, regularPriceValue, hasDiscount } =
+                getPriceInfo(product);
+              const color = SOFT_COLORS[idx % SOFT_COLORS.length];
 
-              const color = softColors[idx % softColors.length];
               return (
                 <Link
                   key={product.slug}
@@ -330,15 +352,15 @@ export default async function Home() {
                       </span>
                     )}
                   </div>
+
                   <div className="p-4 flex flex-col justify-between flex-1">
-                    <div>
-                      <p
-                        className="font-manrope font-semibold text-sm mb-1 line-clamp-2"
-                        style={{ color: "#1a1c1c", letterSpacing: "-0.01em" }}
-                      >
-                        {product.name}
-                      </p>
-                    </div>
+                    <p
+                      className="font-manrope font-semibold text-sm mb-1 line-clamp-2"
+                      style={{ color: "#1a1c1c", letterSpacing: "-0.01em" }}
+                    >
+                      {product.name}
+                    </p>
+
                     <div className="mt-auto flex items-center gap-2 pt-2">
                       <span className="font-manrope text-sm font-bold text-[#316b1c]">
                         {formatPrice(currentPriceValue)}
@@ -355,24 +377,16 @@ export default async function Home() {
             })}
           </div>
 
-          {/* Mobile Browse All button */}
           <div className="mt-10 text-center md:hidden">
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-work text-sm font-semibold transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{
-                background: "linear-gradient(135deg, #316b1c, #66a34d)",
-                color: "#ffffff",
-              }}
-            >
+            <GradientButton href="/shop" className="active:scale-[0.98]">
               Browse All Objects
               <ArrowRight size={15} />
-            </Link>
+            </GradientButton>
           </div>
         </div>
       </section>
 
-      {/* ── Newsletter ── */}
+      {/* Newsletter */}
       <section className="py-24" style={{ background: "#f9f9f9" }}>
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div
@@ -411,11 +425,10 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ── Footer ── */}
+      {/* Footer */}
       <footer style={{ background: "#1a1c1c", color: "#c1c9b8" }}>
         <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-14">
-            {/* Brand */}
             <div className="md:col-span-2">
               <p
                 className="font-manrope font-bold text-2xl mb-3"
@@ -430,6 +443,7 @@ export default async function Home() {
                 A curated digital gallery of rare finds and artisanal objects.
                 Supporting creators worldwide through intentional commerce.
               </p>
+
               <div className="flex gap-3 mt-6">
                 <a
                   href="https://instagram.com"
@@ -457,7 +471,6 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Shop */}
             <div>
               <p
                 className="font-manrope font-semibold text-xs uppercase tracking-widest mb-5"
@@ -475,20 +488,19 @@ export default async function Home() {
                   "Textiles",
                   "Lighting",
                   "Furniture",
-                ].map((l) => (
-                  <li key={l}>
+                ].map((item) => (
+                  <li key={item}>
                     <Link
                       href="/shop"
                       className="transition-colors hover:text-white"
                     >
-                      {l}
+                      {item}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Guide */}
             <div>
               <p
                 className="font-manrope font-semibold text-xs uppercase tracking-widest mb-5"
@@ -505,17 +517,18 @@ export default async function Home() {
                   { label: "Shipping", href: "/pages" },
                   { label: "Authenticity", href: "/pages" },
                   { label: "Contact", href: "/pages" },
-                ].map((l) => (
-                  <li key={l.label}>
+                ].map((item) => (
+                  <li key={item.label}>
                     <Link
-                      href={l.href}
+                      href={item.href}
                       className="transition-colors hover:text-white"
                     >
-                      {l.label}
+                      {item.label}
                     </Link>
                   </li>
                 ))}
               </ul>
+
               <p
                 className="font-work text-xs mt-8 leading-relaxed"
                 style={{ color: "#41493c" }}
