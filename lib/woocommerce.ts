@@ -17,9 +17,15 @@ import type {
 } from "./woocommerce.d";
 
 // Configuration
-const baseUrl = process.env.WORDPRESS_URL;
+let baseUrl = process.env.WORDPRESS_URL;
 const consumerKey = process.env.WC_CONSUMER_KEY;
 const consumerSecret = process.env.WC_CONSUMER_SECRET;
+
+// Bypass HTTPS for local development if the user requested it
+if (baseUrl && baseUrl.includes('.local')) {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  baseUrl = baseUrl.replace('http://', 'https://');
+}
 
 const isConfigured = Boolean(baseUrl && consumerKey && consumerSecret);
 
@@ -126,8 +132,8 @@ async function woocommerceFetchGraceful<T>(
 
   try {
     return await woocommerceFetch<T>(endpoint, query, tags);
-  } catch {
-    console.warn(`WooCommerce fetch failed for ${endpoint}`);
+  } catch (error) {
+    console.error(`WooCommerce fetch ACTUAL ERROR for ${endpoint}:`, error);
     return fallback;
   }
 }
@@ -186,8 +192,8 @@ async function woocommerceFetchPaginatedGraceful<T>(
 
   try {
     return await woocommerceFetchPaginated<T[]>(endpoint, query, tags);
-  } catch {
-    console.warn(`WooCommerce paginated fetch failed for ${endpoint}`);
+  } catch (error) {
+    console.error(`WooCommerce paginated fetch ACTUAL ERROR for ${endpoint}:`, error);
     return emptyResponse;
   }
 }

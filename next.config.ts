@@ -1,12 +1,12 @@
 import type { NextConfig } from "next";
 
-const wordpressHostname =
-  process.env.WORDPRESS_HOSTNAME || "us1.wpdemo.org";
+const wordpressHostname = process.env.WORDPRESS_HOSTNAME || "us1.wpdemo.org";
 const wordpressUrl = process.env.WORDPRESS_URL;
 
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: "https",

@@ -7,6 +7,10 @@ import { ShoppingCart, X, Plus, Minus, Trash2 } from "lucide-react";
 import { useCart } from "./cart-provider";
 import { formatPrice } from "@/lib/woocommerce";
 import { Button } from "@/components/ui/button";
+import { useRef } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import {
   Sheet,
   SheetContent,
@@ -17,6 +21,137 @@ import {
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+
+function CartItemList({
+  cart,
+  removeItem,
+  updateQuantity,
+}: {
+  cart: any;
+  removeItem: any;
+  updateQuantity: any;
+}) {
+  const container = useRef<HTMLDivElement>(null);
+  const [listRef] = useAutoAnimate();
+
+  useGSAP(
+    () => {
+      if (cart.items.length > 0) {
+        gsap.fromTo(
+          ".cart-item-anim",
+          { x: 40, opacity: 0 },
+          {
+            x: 0,
+            opacity: 1,
+            duration: 0.35,
+            stagger: 0.08,
+            ease: "power2.out",
+            delay: 0.05,
+          },
+        );
+      }
+    },
+    { scope: container },
+  );
+
+  return (
+    <ScrollArea ref={container} className="flex-1 -mx-6 px-6">
+      <div ref={listRef} className="space-y-4 py-4">
+        {cart.items.map((item: any) => (
+          <div
+            key={`${item.productId}-${item.variationId || ""}`}
+            className="cart-item-anim flex gap-4"
+          >
+            {/* Image */}
+            <div className="relative h-20 w-20 shrink-0 rounded-md overflow-hidden bg-muted">
+              {item.image ? (
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  fill
+                  className="object-cover"
+                  sizes="80px"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-muted-foreground text-xs">
+                  No image
+                </div>
+              )}
+            </div>
+
+            {/* Details */}
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-sm line-clamp-2">{item.name}</h4>
+
+              {item.attributes && item.attributes.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {item.attributes.map((a: any) => a.option).join(", ")}
+                </p>
+              )}
+
+              <p className="font-medium mt-1">{formatPrice(item.price)}</p>
+
+              {/* Quantity Controls */}
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center border rounded-md">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() =>
+                      updateQuantity(
+                        item.productId,
+                        item.quantity - 1,
+                        item.variationId,
+                      )
+                    }
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <span className="w-8 text-center text-sm">
+                    {item.quantity}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() =>
+                      updateQuantity(
+                        item.productId,
+                        item.quantity + 1,
+                        item.variationId,
+                      )
+                    }
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-destructive"
+                  onClick={() => removeItem(item.productId, item.variationId)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Line Total */}
+            <div className="text-right">
+              <p className="font-medium">
+                {formatPrice(
+                  (parseFloat(item.price) * item.quantity).toString(),
+                )}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
+  );
+}
 
 export function CartDrawer() {
   const {
@@ -33,17 +168,31 @@ export function CartDrawer() {
   const itemCount = getItemCount();
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => (open ? openCart() : closeCart())}>
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => (open ? openCart() : closeCart())}
+    >
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <ShoppingCart className="h-5 w-5" />
+        <button
+          className="relative inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-all hover:opacity-80 sm:px-4"
+          style={{
+            background: "linear-gradient(135deg, #316b1c, #66a34d)",
+            color: "#ffffff",
+            fontFamily: "'Work Sans', sans-serif",
+          }}
+        >
+          <ShoppingCart className="h-4 w-4" />
+          <span className="hidden sm:inline">Cart</span>
           {itemCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+            <span
+              className="absolute -top-2 -right-2 h-5 w-5 rounded-full text-xs flex items-center justify-center shadow-sm"
+              style={{ background: "#1a1c1c", color: "#ffffff" }}
+            >
               {itemCount > 99 ? "99+" : itemCount}
             </span>
           )}
           <span className="sr-only">Open cart</span>
-        </Button>
+        </button>
       </SheetTrigger>
 
       <SheetContent className="flex flex-col w-full sm:max-w-lg">
@@ -56,7 +205,9 @@ export function CartDrawer() {
 
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="animate-pulse text-muted-foreground">Loading...</div>
+            <div className="animate-pulse text-muted-foreground">
+              Loading...
+            </div>
           </div>
         ) : cart.items.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
@@ -70,107 +221,11 @@ export function CartDrawer() {
           </div>
         ) : (
           <>
-            <ScrollArea className="flex-1 -mx-6 px-6">
-              <div className="space-y-4 py-4">
-                {cart.items.map((item) => (
-                  <div
-                    key={`${item.productId}-${item.variationId || ""}`}
-                    className="flex gap-4"
-                  >
-                    {/* Image */}
-                    <div className="relative h-20 w-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
-                      {item.image ? (
-                        <Image
-                          src={item.image}
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                          sizes="80px"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center w-full h-full text-muted-foreground text-xs">
-                          No image
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-sm line-clamp-2">
-                        {item.name}
-                      </h4>
-
-                      {item.attributes && item.attributes.length > 0 && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {item.attributes.map((a) => a.option).join(", ")}
-                        </p>
-                      )}
-
-                      <p className="font-medium mt-1">
-                        {formatPrice(item.price)}
-                      </p>
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="flex items-center border rounded-md">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() =>
-                              updateQuantity(
-                                item.productId,
-                                item.quantity - 1,
-                                item.variationId
-                              )
-                            }
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="w-8 text-center text-sm">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() =>
-                              updateQuantity(
-                                item.productId,
-                                item.quantity + 1,
-                                item.variationId
-                              )
-                            }
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive"
-                          onClick={() =>
-                            removeItem(item.productId, item.variationId)
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Line Total */}
-                    <div className="text-right">
-                      <p className="font-medium">
-                        {formatPrice(
-                          (parseFloat(item.price) * item.quantity).toString()
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+            <CartItemList
+              cart={cart}
+              removeItem={removeItem}
+              updateQuantity={updateQuantity}
+            />
 
             <div className="border-t pt-4 space-y-4">
               {/* Totals */}

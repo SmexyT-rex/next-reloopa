@@ -1,11 +1,10 @@
 import "./globals.css";
 
-import { Inter as FontSans } from "next/font/google";
+import { Inter as FontSans, Manrope, Work_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Analytics } from "@vercel/analytics/react";
 import { CartProvider } from "@/components/shop";
 import { Nav } from "@/components/layout/nav";
-import { Footer } from "@/components/layout/footer";
 
 import { siteConfig } from "@/site.config";
 import { cn } from "@/lib/utils";
@@ -15,6 +14,16 @@ import type { Metadata } from "next";
 const font = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+});
+
+const workSans = Work_Sans({
+  subsets: ["latin"],
+  variable: "--font-work",
 });
 
 export const metadata: Metadata = {
@@ -37,7 +46,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
-      <body className={cn("min-h-screen font-sans antialiased", font.variable)}>
+      <body
+        className={cn(
+          "min-h-screen font-sans antialiased",
+          font.variable,
+          manrope.variable,
+          workSans.variable,
+        )}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -47,7 +63,6 @@ export default function RootLayout({
           <CartProvider>
             <Nav />
             {children}
-            <Footer />
           </CartProvider>
         </ThemeProvider>
         <Analytics />
