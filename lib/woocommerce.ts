@@ -22,12 +22,6 @@ let baseUrl = process.env.WORDPRESS_URL;
 const consumerKey = process.env.WC_CONSUMER_KEY;
 const consumerSecret = process.env.WC_CONSUMER_SECRET;
 
-// Bypass HTTPS for local development if the user requested it
-if (baseUrl && baseUrl.includes(".local")) {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-  baseUrl = baseUrl.replace("http://", "https://");
-}
-
 const isConfigured = Boolean(baseUrl && consumerKey && consumerSecret);
 
 if (!isConfigured) {
